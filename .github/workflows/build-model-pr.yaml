@@ -37,7 +37,6 @@ jobs:
         model-id: ${{ vars.QWAK_MODEL_ID }}                 # stored as a Repository variable
         instance: 'medium'                                  # replace with the required instance
         tags: ${{ env.BRANCH_NAME }}                        # tag the build with the branch name
-        iam-role-arn: ${{ secrets.AWS_IAM_ROLE_ARN }}       # stored as a Repository secret
         # other config inputs as needed
 
     - name: Create build_metadata.json

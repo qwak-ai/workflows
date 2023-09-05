@@ -80,7 +80,6 @@ jobs:
             from-file=config.yaml'
           instance: 'small'                                 # Optional, specify if you want a different instance type
           replicas: 1                                       # Optional, specify if you want more replicas
-          iam-role-arn: ${{ secrets.AWS_IAM_ROLE_ARN }}     # Using the repository secret
           environment: 'prod'                               # Optional, specify if you want a different environment
           timeout-after: 30                                 # Optional, specify if you want a different timeout
 
