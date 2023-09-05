@@ -1,0 +1,10 @@
+name: New Release Workflow
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    runs-on: ubuntu-latest

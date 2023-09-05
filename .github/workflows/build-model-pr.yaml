@@ -1,0 +1,55 @@
+name: Build Qwak Model on PR
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+        - 'main'                                            # replace with your `main` or `master` branch
+    paths-ignore:
+        - "*.md"
+  workflow_dispatch:  # Enables manual trigger
+
+jobs:
+  build-model:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    
+    - name: Generate dynamic branch name (manual runs only)
+      if: github.event_name == 'workflow_dispatch'
+      run: |                                                # Triggered manually via dispatch
+        branch_name="manual-${{ github.actor }}-$(date +%s)"
+        echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+
+    - name: Extract branch name (automatic runs)
+      if: github.event_name != 'workflow_dispatch'          
+      run: |                                                # Triggered on pull request
+        branch_name="${GITHUB_REF#refs/heads/}"
+        echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+
+    - name: Build Qwak Model
+      id: qwak-build
+      uses: qwak-ai/build-action@v1
+      with:
+        model-id: ${{ vars.QWAK_MODEL_ID }}                 # stored as a Repository variable
+        instance: 'medium'                                  # replace with the required instance
+        tags: ${{ env.BRANCH_NAME }}                        # tag the build with the branch name
+        iam-role-arn: ${{ secrets.AWS_IAM_ROLE_ARN }}       # stored as a Repository secret
+        # other config inputs as needed
+
+    - name: Create build_metadata.json
+      run: |
+        echo '{
+            "build_id": "${{ steps.qwak-build.outputs.build-id }}",
+            "build_status": "${{ steps.qwak-build.outputs.build-status }}",
+            "build_metrics": "${{ steps.qwak-build.outputs.build-metrics }}"
+        }' > build_metadata.json
+
+    - name: Upload build_metadata.json as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: build_metadata                                # The name under which the artifact will be stored and can be downloaded later
+        path: build_metadata.json                           # The actual file you are uploadin

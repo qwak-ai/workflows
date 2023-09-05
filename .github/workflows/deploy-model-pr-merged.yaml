@@ -1,0 +1,14 @@
+name: Deploy Successful Qwak Model Build When Pull-Request is Merged
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      # Your additional steps here
