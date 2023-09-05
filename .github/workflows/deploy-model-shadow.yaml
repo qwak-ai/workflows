@@ -5,20 +5,19 @@ on:
     workflows: ["Build Qwak Model on PR"]
     types:
       - completed
-
   workflow_dispatch:  # Enables manual trigger
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: [ self-hosted ]        # change with your requirede instance for example [ubuntu-latest]
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+  
     steps:
     # Download the build_metadata.json artifact from the previous workflow
     - name: Download build_metadata artifact
       uses: actions/download-artifact@v3
       with:
         name: build_metadata
-        path: ./  # Downloads to the current working directory
 
     # Install jq for JSON parsing
     - name: Install jq
@@ -70,11 +69,13 @@ jobs:
 
     # Deploy model to a shadow/canary endpoint  
     - name: Deploy Qwak Build
-      uses: qwak-ai/deploy-action@v1.0.1  # Replace with the actual repo and version
+      uses: qwak-ai/deploy-action@main
       with:
+          qwak-api-key: ${{ secrets.QWAK_API_KEY }}
           deploy-type: 'realtime'                           # Replace with the deployment type you need
           model-id: ${{ vars.QWAK_MODEL_ID }}               # Using the repository variable for model ID
           build-id: ${{ env.build_id }}                     # Using the environment variable set earlier
+          tags: 'manual-dakar91'
           param-list: |                                     # Add the parameters according to your deployment type
             'variation-name=shadow-gha,
             from-file=config.yaml'

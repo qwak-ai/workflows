@@ -11,17 +11,17 @@ on:
 
 jobs:
   build-model:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted ]        # change with your requirede instance for example [ubuntu-latest]
 
     steps:
+
     - name: Checkout code
       uses: actions/checkout@v3
-
     
     - name: Generate dynamic branch name (manual runs only)
       if: github.event_name == 'workflow_dispatch'
       run: |                                                # Triggered manually via dispatch
-        branch_name="manual-${{ github.actor }}-$(date +%s)"
+        branch_name="manual-${{ github.actor }}"
         echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
 
     - name: Extract branch name (automatic runs)
@@ -32,19 +32,20 @@ jobs:
 
     - name: Build Qwak Model
       id: qwak-build
-      uses: qwak-ai/build-action
+      uses: qwak-ai/build-action@v1
       with:
+        qwak-api-key: ${{ secrets.QWAK_API_KEY }}
         model-id: ${{ vars.QWAK_MODEL_ID }}                 # stored as a Repository variable
         instance: 'medium'                                  # replace with the required instance
-        tags: ${{ env.BRANCH_NAME }}                        # tag the build with the branch name
+        tags: ${{ github.head_ref }}                        # tag the build with the branch name
         # other config inputs as needed
 
     - name: Create build_metadata.json
       run: |
         echo '{
-            "build_id": "${{ steps.qwak-build.outputs.build-id }}",
-            "build_status": "${{ steps.qwak-build.outputs.build-status }}",
-            "build_metrics": "${{ steps.qwak-build.outputs.build-metrics }}"
+            "build_id": "${{ env.build-id }}",
+            "build_status": "${{ env.build-status }}",
+            "build_metrics": "${{ env.build-metrics }}"
         }' > build_metadata.json
 
     - name: Upload build_metadata.json as artifact
@@ -52,3 +53,4 @@ jobs:
       with:
         name: build_metadata                                # The name under which the artifact will be stored and can be downloaded later
         path: build_metadata.json                           # The actual file you are uploadin
+        retention-days: 1

@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted ]        # change with your requirede instance for example [ubuntu-latest]
     steps:
     # Download the build_metadata.json artifact from the previous workflow
     - name: Download build_metadata artifact
