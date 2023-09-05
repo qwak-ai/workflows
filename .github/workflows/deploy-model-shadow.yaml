@@ -70,7 +70,7 @@ jobs:
 
     # Deploy model to a shadow/canary endpoint  
     - name: Deploy Qwak Build
-      uses: qwak-ai/deploy-action@v1  # Replace with the actual repo and version
+      uses: qwak-ai/deploy-action  # Replace with the actual repo and version
       with:
           deploy-type: 'realtime'                           # Replace with the deployment type you need
           model-id: ${{ vars.QWAK_MODEL_ID }}               # Using the repository variable for model ID

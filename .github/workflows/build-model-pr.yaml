@@ -32,7 +32,7 @@ jobs:
 
     - name: Build Qwak Model
       id: qwak-build
-      uses: qwak-ai/build-action@v1
+      uses: qwak-ai/build-action
       with:
         model-id: ${{ vars.QWAK_MODEL_ID }}                 # stored as a Repository variable
         instance: 'medium'                                  # replace with the required instance
