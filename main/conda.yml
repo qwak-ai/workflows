@@ -1,0 +1,12 @@
+name: qwak-crowdfunding-model
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - scipy
+  - scikit-learn
+  - pandas
+  - pip:
+    - pyathena
+    - pyarrow
