@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-model:
-    runs-on: [ self-hosted ]        # change with your requirede instance for example [ubuntu-latest]
+    runs-on: [self-hosted]        # change with your requirede instance for example [ubuntu-latest]
 
     steps:
 
