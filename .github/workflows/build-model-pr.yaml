@@ -4,14 +4,14 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
     branches:
-        - 'main'                                            # replace with your `main` or `master` branch
+        - 'main'                    # replace with your `main` or `master` branch
     paths-ignore:
         - "*.md"
-  workflow_dispatch:  # Enables manual trigger
+  workflow_dispatch:                # Enables manual trigger
 
 jobs:
   build-model:
-    runs-on: [self-hosted]        # change with your requirede instance for example [ubuntu-latest]
+    runs-on: [ self-hosted ]        # change with your requirede instance for example [ubuntu-latest]
 
     steps:
 
@@ -32,7 +32,7 @@ jobs:
 
     - name: Build Qwak Model
       id: qwak-build
-      uses: qwak-ai/build-action@v1
+      uses: qwak-ai/build-action@main
       with:
         qwak-api-key: ${{ secrets.QWAK_API_KEY }}
         model-id: ${{ vars.QWAK_MODEL_ID }}                 # stored as a Repository variable
