@@ -1,0 +1,128 @@
+name: Build and Deploy Qwak Model on PR
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+        - 'main'                    # replace with your `main` or `master` branch
+    paths-ignore:
+        - "*.md"                    # Ignore modifications to Readme files
+  workflow_dispatch:                # Enables manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest #[ self-hosted ]        # change with your requirede instance for example [ubuntu-latest]
+    outputs:
+      build_id: ${{ env.build-id }}
+      build_status: ${{ env.build-status }}
+      build_metrics: ${{ env.build-metrics }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Download existing build artifact if any
+    - name: Download build artifact
+      id: download-artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: build-${{ github.sha }}
+      continue-on-error: true                               # Continue if artifact doesn't exist
+
+    # Check if build artifact exists and read its content
+    # This step will verify if there is an existent successful build for this commit SHA
+    - name: Check if build artifact exists
+      run: |
+        if [[ -f "./artifacts/build_successful.txt" ]]; then
+          echo "Build artifact exists, skipping build."
+          echo "SKIP_BUILD=true" >> $GITHUB_ENV
+          echo "build-id=$(cat ./artifacts/build_id.txt)" >> $GITHUB_ENV
+          echo "build-status=$(cat ./artifacts/build_status.txt)" >> $GITHUB_ENV
+          echo "build-metrics=$(cat ./artifacts/build_metrics.txt)" >> $GITHUB_ENV
+        fi
+
+    - name: Build Qwak Model
+      if: env.SKIP_BUILD != 'true'                          # Skip if artifact exists
+      id: qwak-build
+      uses: qwak-ai/build-action@v1
+      with:
+        qwak-api-key: ${{ secrets.QWAK_API_KEY }}
+        model-id: ${{ vars.QWAK_MODEL_ID }}                 # stored as a Repository variable
+        instance: 'medium'                                  # replace with the required instance
+        tags: ${{ github.head_ref }}                        # tag the build with the branch name
+        # other config inputs as needed
+
+    
+    # Create artifact files
+    # Only run if there are no existent successful builds for this commit SHA
+    - name: Create Artifact Files
+      if: env.SKIP_BUILD != 'true' && env.build-status == 'SUCCESSFUL'
+      run: |
+        mkdir -p ./artifacts  
+        echo "${{ env.build-id }}" > ./artifacts/build_id.txt
+        echo "${{ env.build-status }}" > ./artifacts/build_status.txt
+        echo "${{ env.build-metrics }}" > ./artifacts/build_metrics.txt
+        touch ./artifacts/build_successful.txt
+        
+
+    # Upload artifact to Github - necessary to avoid repeated builds for the same commit SHA
+    - name: Upload build artifact
+      if: env.SKIP_BUILD != 'true' && env.build-status == 'SUCCESSFUL'
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-${{ github.sha }}                       # Artifact name with commit SHA
+        path: ./artifacts/                                  # Artifact file
+
+    # [Optional] Additional step to notify e.g. Slack
+
+    # [Optional] Additional step to post Qwak Build link on the Pull Request page
+
+  deploy:
+    if: needs.build.outputs.build_status == 'SUCCESSFUL' 
+    runs-on: ubuntu-latest #[ self-hosted ]
+    needs: build
+    steps:
+
+    # Generate the YAML config file for variations
+    - name: Generate YAML config
+      run: |
+          yq eval '{
+            "realtime": {
+              "variation_name": "shadow-gha",
+              "audiences": [
+                {
+                  "id": "audience_id",
+                  "routes": [
+                    {
+                      "variation_name": "default",
+                      "weight": 100,
+                      "shadow": false
+                    },
+                    {
+                      "variation_name": "shadow-gha",
+                      "weight": 20,
+                      "shadow": true
+                    }
+                  ]
+                }
+              ],
+              "fallback_variation": "shadow-gha"
+            }
+          }' > config.yaml
+
+    # Deploy model to a shadow/canary endpoint  
+    - name: Deploy Qwak Build
+      uses: qwak-ai/deploy-action@v1
+      with:
+        qwak-api-key: ${{ secrets.QWAK_API_KEY }}
+        deploy-type: 'realtime'                           # Replace with the deployment type you need
+        model-id: ${{ vars.QWAK_MODEL_ID }}               # Using the repository variable for model ID
+        build-id: ${{ needs.build.outputs.build_id }}     # Using the environment variable set earlier
+        #tags: 'manual-<github-user>'                     # Tag Will be ignored if you specified Build ID
+        param-list: |                                     # Add the parameters according to your deployment type - deploying to a shadow (canary) variation
+          variation-name=shadow-gha,from-file=config.yaml
+        instance: 'small'  
+        
+# [Optional] Additional job to run integration tests on the live model endpoint
+
+# [Optional] Additional 

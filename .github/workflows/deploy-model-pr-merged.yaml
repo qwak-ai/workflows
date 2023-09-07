@@ -4,11 +4,25 @@ on:
   pull_request:
     types: [closed]
 
+  workflow_dispatch:                # Enables manual trigger
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      # Your additional steps here
+
+      #[Optional] Additional step to undeploy a test or shadow deployment
+
+      - name: Deploy the latest successful Qwak Model Build with the Git branch tag
+        uses: qwak-ai/deploy-action@v1
+        with:
+            qwak-api-key: ${{ secrets.QWAK_API_KEY }}
+            deploy-type: 'realtime'                                                         # Replace with the deployment type you need
+            model-id: ${{ vars.QWAK_MODEL_ID }}                                             # Using the repository variable for model ID
+            tags: '${{ github.head_ref }}'                                                  # Deploy the latest successful build with the Git branch as a TAG
+            param-list: 'protected'                                                         # Deploy a protected variation
+            instance: 'small'                                                               # Optional, specify if you want a different instance type
+            replicas: 1                                                                     # Optional, specify if you want more replicas
+            timeout-after: 30                                                               # Optional, specify if you want a different timeout
+
