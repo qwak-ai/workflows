@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-model:
-    runs-on: [ self-hosted ]        # change with your requirede instance for example [ubuntu-latest]
+    runs-on: self-hosted        # change with your requirede instance for example [ubuntu-latest]
 
     steps:
 
@@ -32,12 +32,12 @@ jobs:
 
     - name: Build Qwak Model
       id: qwak-build
-      uses: qwak-ai/build-action@v1
+      uses: qwak-ai/build-action@main
       with:
         qwak-api-key: ${{ secrets.QWAK_API_KEY }}
-        model-id: ${{ vars.QWAK_MODEL_ID }}                 # stored as a Repository variable
-        instance: 'medium'                                  # replace with the required instance
-        tags: ${{ github.head_ref }}                        # tag the build with the branch name
+        model-id: ${{ vars.QWAK_MODEL_ID }}                                     # stored as a Repository variable
+        instance: 'medium'                                                      # replace with the required instance
+        tags: '${{ github.event.pull_request.title }},${{ github.head_ref }}'   # tag the build with the branch name
         # other config inputs as needed
 
     - name: Create build_metadata.json

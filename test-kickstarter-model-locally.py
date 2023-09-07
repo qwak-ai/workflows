@@ -56,4 +56,4 @@ if __name__ == '__main__':
 
     # Run local inference using the model
     prediction = run_local(m, df)
-    print(prediction)
+    print(prediction)     
