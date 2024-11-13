@@ -11,7 +11,7 @@ jobs:
       # Optional: Additional step to undeploy a test or shadow deployment
       
       - name: Deploy the latest successful Qwak Model Build with the Git branch tag
-        uses: qwak-ai/deploy-action@v1
+        uses: qwak-ai/deploy-action@main
         with:
           qwak-api-key: ${{ secrets.QWAK_API_KEY }}
           deploy-type: 'batch'  # Replace with the deployment type you need
